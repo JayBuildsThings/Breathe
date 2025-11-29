@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e3a8a">
+    <title>Breath Flow</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+            color: #1e293b; /* Slate 800 */
+            overscroll-behavior: none;
+        }
+
+        /* Classic App Feel - Smooth Transitions */
+        .screen {
+            transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            opacity: 0;
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 0.25rem;
+        }
+
+        .input-classic {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            background: white;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .input-classic:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        .btn-primary {
+            background-color: #1e3a8a;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.3);
+            transition: transform 0.1s active;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-outline {
+            border: 2px solid #1e3a8a;
+            color: #1e3a8a;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            background: transparent;
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #1e3a8a;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #1e3a8a;
+        }
+
+        /* Canvas container */
+        #visualizer-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            background: #f1f5f9;
+            border-radius: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        /* Fade overlay for graph edges */
+        .graph-fade {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .fade-left { left: 0; background: linear-gradient(to right, #f1f5f9, transparent); }
+        .fade-right { right: 0; background: linear-gradient(to left, #f1f5f9, transparent); }
+
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden relative">
+
+    <!-- Screen 1: Opening -->
+    <div id="screen-home" class="screen active flex-col justify-center items-center bg-slate-50">
+        <div class="text-center p-8 w-full max-w-md">
+            <h1 class="text-6xl font-light text-slate-800 mb-2 tracking-tight" style="font-family: 'DM Sans', sans-serif;">BREATH</h1>
+            <div class="w-16 h-1 bg-blue-900 mx-auto mb-16 rounded-full opacity-80"></div>
+            
+            <button onclick="goToConfig()" class="btn-primary text-xl py-6 shadow-xl">
+                Start
+            </button>
+        </div>
+    </div>
+
+    <!-- Screen 2: Configuration -->
+    <div id="screen-config" class="screen flex-col bg-white">
+        <div class="w-full max-w-md mx-auto p-6 h-full flex flex-col">
+            
+            <!-- Header -->
+            <div class="flex items-center mb-6">
+                <button onclick="goToHome()" class="text-slate-400 p-2 -ml-2 hover:text-blue-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <h2 class="text-xl font-bold text-slate-800 ml-2">Setup Routine</h2>
+            </div>
+
+            <!-- Routine Selector -->
+            <div class="mb-8">
+                <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Select Routine</label>
+                <div class="relative">
+                    <select id="routine-select" onchange="loadRoutine()" class="input-classic appearance-none bg-transparent">
+                        <!-- Options populated by JS -->
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
+                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inputs Grid -->
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="input-group">
+                    <label>Inhale (s)</label>
+                    <input type="number" id="inp-inhale" class="input-classic text-center" value="4" oninput="checkChanges()">
+                </div>
+                <div class="input-group">
+                    <label>Hold Full (s)</label>
+                    <input type="number" id="inp-hold-full" class="input-classic text-center" value="4" oninput="checkChanges()">
+                </div>
+                <div class="input-group">
+                    <label>Exhale (s)</label>
+                    <input type="number" id="inp-exhale" class="input-classic text-center" value="4" oninput="checkChanges()">
+                </div>
+                <div class="input-group">
+                    <label>Hold Empty (s)</label>
+                    <input type="number" id="inp-hold-empty" class="input-classic text-center" value="4" oninput="checkChanges()">
+                </div>
+            </div>
+
+            <div class="input-group mb-8">
+                <label>Total Duration (min)</label>
+                <input type="number" id="inp-duration" class="input-classic" value="5" oninput="checkChanges()">
+            </div>
+
+            <!-- Settings Toggles -->
+            <div class="grid grid-cols-1 gap-4 mb-8">
+                <!-- Sound Toggle -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                    <span class="font-medium text-slate-700 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        Sound Effects
+                    </span>
+                    <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="sound-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 checked:right-0 checked:border-blue-900 transition-all duration-200"/>
+                        <label for="sound-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                    </div>
+                </div>
+
+                <!-- Vibration Toggle -->
+                <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
+                    <span class="font-medium text-slate-700 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18M18 3v18M2 7v10M22 7v10"/></svg>
+                        Vibration
+                    </span>
+                    <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="vibration-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 checked:right-0 checked:border-blue-900 transition-all duration-200"/>
+                        <label for="vibration-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-auto">
+                <button id="btn-start-save" onclick="handleStart()" class="btn-primary text-lg">
+                    START
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Active Breathwork -->
+    <div id="screen-active" class="screen flex-col bg-white justify-between">
+        <div class="w-full max-w-md mx-auto p-6 h-full flex flex-col relative">
+            
+            <!-- Phase Text -->
+            <div class="text-center mt-8 mb-4">
+                <h2 id="phase-label" class="text-5xl font-light text-slate-800 tracking-wide transition-all duration-300">INHALE</h2>
+            </div>
+
+            <!-- Visualizer -->
+            <div id="visualizer-container">
+                <div class="graph-fade fade-left"></div>
+                <div class="graph-fade fade-right"></div>
+                <canvas id="breath-canvas"></canvas>
+            </div>
+
+            <!-- Instruction / Helper -->
+            <div class="text-center text-slate-500 text-sm mb-8 space-y-1">
+                <p>Follow the blue dot.</p>
+                <p id="sub-instruction" class="font-medium text-blue-900 h-6">...</p>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mb-8">
+                <div class="flex justify-between text-sm text-slate-500 mb-1">
+                    <span>Time Left</span>
+                    <span id="time-display">05:00</span>
+                </div>
+                <div class="w-full bg-slate-100 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-900 h-2.5 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                </div>
+            </div>
+
+            <!-- Stop Button -->
+            <div class="mt-auto mb-4">
+                <button onclick="stopSession()" class="btn-outline w-full border-red-500 text-red-500 hover:bg-red-50">
+                    STOP SESSION
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        const DEFAULT_ROUTINES = [
+            { name: "Box Breathing (4-4-4-4)", inhale: 4, holdFull: 4, exhale: 4, holdEmpty: 4, duration: 5 },
+            { name: "Relaxing (4-7-8-0)", inhale: 4, holdFull: 7, exhale: 8, holdEmpty: 0, duration: 10 },
+            { name: "Energizing (6-0-2-0)", inhale: 6, holdFull: 0, exhale: 2, holdEmpty: 0, duration: 3 },
+            { name: "Coherence (5-0-5-0)", inhale: 5, holdFull: 0, exhale: 5, holdEmpty: 0, duration: 5 },
+        ];
+
+        let state = {
+            routines: [],
+            currentRoutineIndex: 0,
+            isDirty: false,
+            active: false,
+            startTime: 0,
+            totalTimeMs: 0,
+            phaseConfig: {}, 
+            cycleDuration: 0,
+            soundEnabled: false,
+            vibrationEnabled: false
+        };
+
+        // --- Audio Context for "Singing Bowl" Sound ---
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playChime() {
+            if (!state.active) return;
+
+            // Vibration
+            if (state.vibrationEnabled && navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+
+            // Sound
+            if (state.soundEnabled && audioCtx) {
+                const t = audioCtx.currentTime;
+                const fundamental = 440; // A4
+                
+                [1, 2.1, 3.5].forEach((ratio, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.value = fundamental * ratio;
+                    
+                    gain.gain.setValueAtTime(0, t);
+                    gain.gain.linearRampToValueAtTime(0.1 / (i+1), t + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.start(t);
+                    osc.stop(t + 3);
+                });
+            }
+        }
+
+        // --- Initialization ---
+        window.addEventListener('load', () => {
+            loadStorage();
+            populateSelect();
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js');
+            }
+        });
+
+        // --- Navigation ---
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(el => {
+                el.classList.remove('active');
+                setTimeout(() => {
+                    if(!el.classList.contains('active')) el.style.display = 'none';
+                }, 400); 
+            });
+            
+            const target = document.getElementById(id);
+            target.style.display = 'flex';
+            void target.offsetWidth;
+            target.classList.add('active');
+        }
+
+        function goToConfig() {
+            showScreen('screen-config');
+            loadFormFromState();
+        }
+
+        function goToHome() {
+            showScreen('screen-home');
+        }
+
+        // --- Data Logic ---
+        function loadStorage() {
+            const stored = localStorage.getItem('breathwork_routines');
+            if (stored) {
+                state.routines = JSON.parse(stored);
+            } else {
+                state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES));
+            }
+            
+            const soundPref = localStorage.getItem('breathwork_sound');
+            const vibPref = localStorage.getItem('breathwork_vibration');
+            
+            document.getElementById('sound-toggle').checked = soundPref === 'true';
+            document.getElementById('vibration-toggle').checked = vibPref === 'true';
+        }
+
+        function saveStorage() {
+            localStorage.setItem('breathwork_routines', JSON.stringify(state.routines));
+            localStorage.setItem('breathwork_sound', document.getElementById('sound-toggle').checked);
+            localStorage.setItem('breathwork_vibration', document.getElementById('vibration-toggle').checked);
+        }
+
+        function populateSelect() {
+            const select = document.getElementById('routine-select');
+            select.innerHTML = '';
+            state.routines.forEach((r, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.text = r.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadRoutine() {
+            const idx = document.getElementById('routine-select').value;
+            state.currentRoutineIndex = parseInt(idx);
+            loadFormFromState();
+        }
+
+        function loadFormFromState() {
+            const r = state.routines[state.currentRoutineIndex];
+            document.getElementById('inp-inhale').value = r.inhale;
+            document.getElementById('inp-hold-full').value = r.holdFull;
+            document.getElementById('inp-exhale').value = r.exhale;
+            document.getElementById('inp-hold-empty').value = r.holdEmpty;
+            document.getElementById('inp-duration').value = r.duration;
+            state.isDirty = false;
+            updateStartButton();
+        }
+
+        function checkChanges() {
+            state.isDirty = true;
+            updateStartButton();
+        }
+
+        function updateStartButton() {
+            const btn = document.getElementById('btn-start-save');
+            btn.innerText = state.isDirty ? "SAVE & START" : "START";
+        }
+
+        function handleStart() {
+            if (state.isDirty) {
+                const newRoutine = {
+                    name: "Custom Routine " + (state.routines.length + 1),
+                    inhale: parseFloat(document.getElementById('inp-inhale').value),
+                    holdFull: parseFloat(document.getElementById('inp-hold-full').value),
+                    exhale: parseFloat(document.getElementById('inp-exhale').value),
+                    holdEmpty: parseFloat(document.getElementById('inp-hold-empty').value),
+                    duration: parseFloat(document.getElementById('inp-duration').value)
+                };
+                
+                state.routines[state.currentRoutineIndex] = { 
+                    ...state.routines[state.currentRoutineIndex], 
+                    ...newRoutine, 
+                    name: state.routines[state.currentRoutineIndex].name.includes("(Edited)") ? state.routines[state.currentRoutineIndex].name : state.routines[state.currentRoutineIndex].name + " (Edited)" 
+                };
+                
+                saveStorage();
+                populateSelect();
+                document.getElementById('routine-select').value = state.currentRoutineIndex;
+            }
+
+            state.soundEnabled = document.getElementById('sound-toggle').checked;
+            state.vibrationEnabled = document.getElementById('vibration-toggle').checked;
+            saveStorage(); // Ensure separate prefs are saved
+            
+            if (state.soundEnabled) initAudio();
+
+            startSession();
+        }
+
+        // --- Active Session Logic ---
+        let animationFrameId;
+        let lastPhase = '';
+
+        function startSession() {
+            const inhale = parseFloat(document.getElementById('inp-inhale').value) * 1000;
+            const holdFull = parseFloat(document.getElementById('inp-hold-full').value) * 1000;
+            const exhale = parseFloat(document.getElementById('inp-exhale').value) * 1000;
+            const holdEmpty = parseFloat(document.getElementById('inp-hold-empty').value) * 1000;
+            const durationMins = parseFloat(document.getElementById('inp-duration').value);
+
+            if (inhale + holdFull + exhale + holdEmpty === 0) return;
+
+            state.phaseConfig = { inhale, holdFull, exhale, holdEmpty };
+            state.cycleDuration = inhale + holdFull + exhale + holdEmpty;
+            state.totalTimeMs = durationMins * 60 * 1000;
+            state.startTime = Date.now();
+            state.active = true;
+
+            showScreen('screen-active');
+            setupCanvas();
+            loop();
+        }
+
+        function stopSession() {
+            state.active = false;
+            cancelAnimationFrame(animationFrameId);
+            goToConfig();
+        }
+
+        function formatTime(ms) {
+            if (ms < 0) ms = 0;
+            const totalSecs = Math.ceil(ms / 1000);
+            const m = Math.floor(totalSecs / 60);
+            const s = totalSecs % 60;
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- Logic: Get Phase Data from Time ---
+        function getPhaseInfoAtTime(timeMs) {
+            // Normalize time to a single cycle
+            // NOTE: timeMs can be negative for drawing the "future" or "past" off-screen
+            // We need modulo that handles negatives correctly
+            let t = timeMs % state.cycleDuration;
+            if (t < 0) t += state.cycleDuration;
+
+            const { inhale, holdFull, exhale, holdEmpty } = state.phaseConfig;
+            
+            // Determine Phase & Y-Value (Progress 0.0 to 1.0)
+            // 0.0 = Empty/Bottom, 1.0 = Full/Top
+            
+            if (t < inhale) {
+                // Inhale: Curve from 0 to 1
+                const p = t / inhale;
+                // Cosine easing: (1 - cos(p * pi)) / 2
+                const val = (1 - Math.cos(p * Math.PI)) / 2;
+                return { phase: 'INHALE', val: val, type: 'up' };
+            }
+            t -= inhale;
+            
+            if (t < holdFull) {
+                // Hold Full: Steady at 1
+                return { phase: 'HOLD', val: 1.0, type: 'top' };
+            }
+            t -= holdFull;
+            
+            if (t < exhale) {
+                // Exhale: Curve from 1 to 0
+                const p = t / exhale;
+                const val = 1 - ((1 - Math.cos(p * Math.PI)) / 2);
+                return { phase: 'EXHALE', val: val, type: 'down' };
+            }
+            // Hold Empty: Steady at 0
+            return { phase: 'HOLD', val: 0.0, type: 'bottom' };
+        }
+
+
+        function loop() {
+            if (!state.active) return;
+
+            const now = Date.now();
+            const elapsedTotal = now - state.startTime;
+            const remaining = state.totalTimeMs - elapsedTotal;
+
+            if (remaining <= 0) {
+                playChime();
+                stopSession();
+                return;
+            }
+
+            // UI Updates
+            document.getElementById('time-display').innerText = formatTime(remaining);
+            document.getElementById('progress-bar').style.width = ((remaining / state.totalTimeMs) * 100) + '%';
+
+            // Current Phase Logic for Text/Sound
+            const currentInfo = getPhaseInfoAtTime(elapsedTotal);
+            const phaseKey = currentInfo.phase + currentInfo.type; 
+
+            if (phaseKey !== lastPhase) {
+                playChime();
+                lastPhase = phaseKey;
+                
+                const label = document.getElementById('phase-label');
+                label.innerText = currentInfo.phase;
+                label.style.opacity = 0;
+                setTimeout(() => label.style.opacity = 1, 50);
+
+                const sub = document.getElementById('sub-instruction');
+                if(currentInfo.type === 'up') sub.innerText = "Breathe in deeply...";
+                if(currentInfo.type === 'top') sub.innerText = "Hold your breath...";
+                if(currentInfo.type === 'down') sub.innerText = "Let it all go...";
+                if(currentInfo.type === 'bottom') sub.innerText = "Wait empty...";
+            }
+
+            drawPolygraph(elapsedTotal);
+            animationFrameId = requestAnimationFrame(loop);
+        }
+
+        // --- Polygraph Visualizer ---
+        let canvas, ctx, width, height;
+
+        function setupCanvas() {
+            canvas = document.getElementById('breath-canvas');
+            ctx = canvas.getContext('2d');
+            const container = document.getElementById('visualizer-container');
+            
+            const dpr = window.devicePixelRatio || 1;
+            width = container.clientWidth;
+            height = container.clientHeight;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            
+            ctx.scale(dpr, dpr);
+        }
+
+        function drawPolygraph(currentElapsed) {
+            ctx.clearRect(0, 0, width, height);
+
+            const padding = 40;
+            const drawH = height - (padding * 2);
+            const baseY = height - padding;
+            const topY = padding;
+
+            // Configuration for the View Window
+            // How many milliseconds do we see on screen? 
+            // 10 seconds seems like a good "Polygraph" window
+            const WINDOW_MS = 12000; 
+            
+            // Where is "NOW" on the X axis? (0 = left, 0.5 = center, 1 = right)
+            const NOW_X_RATIO = 0.5;
+            const nowX = width * NOW_X_RATIO;
+
+            // Draw the line
+            ctx.beginPath();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#cbd5e1'; // Slate 300
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // We iterate pixels across the screen
+            // Optimization: Skip every few pixels for performance, lineTo interpolates
+            const step = 2; 
+            
+            let firstPoint = true;
+
+            for (let x = 0; x <= width; x += step) {
+                // Calculate what "time" this pixel represents
+                // If x == nowX, time == currentElapsed
+                // If x < nowX, time is in the past
+                // time = currentElapsed + (x - nowX) * (ms per pixel)
+                
+                const msPerPixel = WINDOW_MS / width;
+                const timeAtPixel = currentElapsed + (x - nowX) * msPerPixel;
+
+                const info = getPhaseInfoAtTime(timeAtPixel);
+                
+                // Map info.val (0..1) to Y (baseY..topY)
+                const y = baseY - (info.val * drawH);
+
+                if (firstPoint) {
+                    ctx.moveTo(x, y);
+                    firstPoint = false;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+
+            // Draw "Now" Dot
+            // Calculate Y for exact current time
+            const nowInfo = getPhaseInfoAtTime(currentElapsed);
+            const dotY = baseY - (nowInfo.val * drawH);
+
+            // Dot Shadow/Glow
+            ctx.beginPath();
+            ctx.arc(nowX, dotY, 20, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(30, 58, 138, 0.2)'; // Blue 900 low opacity
+            ctx.fill();
+
+            // Dot Core
+            ctx.beginPath();
+            ctx.arc(nowX, dotY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e3a8a';
+            ctx.fill();
+        }
+    </script>
+</body>
+</html>
