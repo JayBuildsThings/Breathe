@@ -93,6 +93,23 @@
             background: transparent;
         }
 
+        .btn-coffee {
+            border: 2px solid #1e3a8a;
+            color: #1e3a8a;
+            background: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        .btn-coffee:hover {
+            background-color: #eff6ff;
+        }
+
         /* Toggle Switch */
         .toggle-checkbox:checked {
             right: 0;
@@ -112,7 +129,6 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
             margin-bottom: 2rem;
             overflow: hidden;
-            /* Prevent touch actions on canvas dragging */
             touch-action: none;
         }
         
@@ -126,6 +142,23 @@
         }
         .fade-left { left: 0; background: linear-gradient(to right, #f1f5f9, transparent); }
         .fade-right { right: 0; background: linear-gradient(to left, #f1f5f9, transparent); }
+
+        /* Sound Selector Radio Buttons */
+        .sound-option {
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+        .sound-option.selected {
+            border-color: #1e3a8a;
+            background-color: #eff6ff;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
 
     </style>
 </head>
@@ -160,7 +193,7 @@
                 <!-- Routine Selector -->
                 <div class="mb-8">
                     <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Select Routine</label>
-                    <div class="relative">
+                    <div class="relative mb-3">
                         <select id="routine-select" onchange="loadRoutine()" class="input-classic appearance-none bg-transparent">
                             <!-- Options populated by JS -->
                         </select>
@@ -168,6 +201,9 @@
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                         </div>
                     </div>
+                    
+                    <!-- Custom Name Input -->
+                    <input type="text" id="custom-name-input" placeholder="Name this routine to save as new..." class="input-classic text-sm border-dashed" oninput="checkChanges()">
                 </div>
 
                 <!-- Inputs Grid -->
@@ -198,29 +234,27 @@
                 <!-- Settings Toggles -->
                 <div class="grid grid-cols-1 gap-4 mb-8">
                     <!-- Sound Toggle -->
-                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
-                        <span class="font-medium text-slate-700 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                            Sound Effects
-                        </span>
-                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" name="toggle" id="sound-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 checked:right-0 checked:border-blue-900 transition-all duration-200"/>
-                            <label for="sound-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
-                        </div>
-                    </div>
-
-                    <!-- Vibration Toggle -->
-                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100">
-                        <div class="flex flex-col">
+                    <div class="bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                        <div class="flex items-center justify-between p-4">
                             <span class="font-medium text-slate-700 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v18M18 3v18M2 7v10M22 7v10"/></svg>
-                                Vibration
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                Sound Effects
                             </span>
-                            <span class="text-xs text-slate-400 ml-7 mt-1">(Android only)</span>
+                            <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="sound-toggle" onchange="toggleSoundOptions()" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 checked:right-0 checked:border-blue-900 transition-all duration-200"/>
+                                <label for="sound-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                            </div>
                         </div>
-                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" name="toggle" id="vibration-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-slate-300 checked:right-0 checked:border-blue-900 transition-all duration-200"/>
-                            <label for="vibration-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+
+                        <!-- Sound Options (Hidden by default) -->
+                        <div id="sound-options-panel" class="p-4 pt-0 hidden border-t border-slate-100 mt-2">
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Select Tone</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <div class="sound-option" onclick="selectSound(0)" id="sound-opt-0">Bowl</div>
+                                <div class="sound-option" onclick="selectSound(1)" id="sound-opt-1">Gong</div>
+                                <div class="sound-option" onclick="selectSound(2)" id="sound-opt-2">Chime</div>
+                                <div class="sound-option" onclick="selectSound(3)" id="sound-opt-3">Nature</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -268,11 +302,56 @@
                 </div>
             </div>
 
-            <!-- Stop Button -->
-            <div class="mt-auto mb-4 pb-4">
+            <!-- Buy Coffee & Stop Buttons -->
+            <div class="mt-auto mb-4 pb-4 space-y-3">
+                <button onclick="goToSupport()" class="btn-coffee w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                    Buy me a coffee
+                </button>
                 <button onclick="stopSession()" class="btn-outline w-full border-red-500 text-red-500 hover:bg-red-50">
                     STOP SESSION
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 4: Support / Donate -->
+    <div id="screen-support" class="screen flex-col bg-white">
+        <div class="w-full max-w-md mx-auto p-6 flex flex-col h-full">
+            
+            <!-- Header -->
+            <div class="flex items-center mb-8">
+                <button onclick="returnToApp()" class="text-slate-500 flex items-center hover:text-blue-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><path d="m15 18-6-6 6-6"/></svg>
+                    Back to Tracker
+                </button>
+            </div>
+
+            <div class="flex-grow flex flex-col justify-center">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">Support the Project</h2>
+                <div class="w-12 h-1 bg-blue-900 mb-8 rounded-full"></div>
+
+                <div class="bg-slate-50 border border-slate-100 rounded-xl p-6 shadow-sm">
+                    <p class="text-slate-700 mb-6 font-medium">
+                        If this tool has helped you on your breathing journey, a small contribution is greatly appreciated!
+                    </p>
+
+                    <h3 class="font-bold text-slate-900 mb-2">Zcash (ZEC) Wallet</h3>
+                    <p class="text-xs text-slate-500 mb-2">Send Zcash to the shielded address below:</p>
+                    
+                    <div class="bg-slate-800 rounded-lg p-3 mb-4 relative group">
+                        <p id="zcash-address" class="text-green-400 font-mono text-xs break-all leading-relaxed">u1u5ns2ejkgekns2qp393fe3p1laun5gvadvfd69ngqzzws0k8pvg5vvwv3k6uwlcgn6487y3dvdsf6cddv2rfv0lem39pn4qyqk6vlnrkrn848uzepka2njfr6kzwg7ef0m4vpf3t1pledwh08dvu62ejah0sm4lxl3w8lrxwcyw6m075</p>
+                    </div>
+
+                    <button onclick="copyAddress()" id="btn-copy" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 rounded-lg transition-colors flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span id="copy-text">Copy Address</span>
+                    </button>
+                </div>
+                
+                <p class="text-xs text-slate-400 mt-6 text-center">
+                    Your support helps keep this Breathing Assistor free, open-source, and distraction-free. Thank you!
+                </p>
             </div>
         </div>
     </div>
@@ -296,11 +375,12 @@
             phaseConfig: {}, 
             cycleDuration: 0,
             soundEnabled: false,
-            vibrationEnabled: false
+            soundType: 0 // 0: Bowl, 1: Gong, 2: Chime, 3: Nature
         };
 
-        // --- Audio Context for "Singing Bowl" Sound ---
+        // --- Audio Context & Sound Synthesis ---
         let audioCtx;
+        let noiseBuffer = null;
         
         function initAudio() {
             if (!audioCtx) {
@@ -311,40 +391,90 @@
             }
         }
 
+        function getNoiseBuffer() {
+            if (!noiseBuffer && audioCtx) {
+                const bufferSize = audioCtx.sampleRate * 4; // 4 seconds
+                noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+            }
+            return noiseBuffer;
+        }
+
+        // Frequencies and Harmonic Ratios for different sound types
+        const SOUND_PROFILES = {
+            0: { base: 220, ratios: [1, 2.1, 3.5], name: "Bowl" },        // Singing Bowlish
+            1: { base: 110, ratios: [1, 3, 5], name: "Gong" },            // Deep Gong
+            2: { base: 880, ratios: [1, 1.5, 2], name: "Chime" },         // Bright Chime
+            3: { base: 0, ratios: [], name: "Nature" }                    // Nature (Wind/Ocean)
+        };
+
+        function playNatureSound(isPreview = false) {
+             if (!audioCtx) return;
+             
+             const t = audioCtx.currentTime;
+             const dur = isPreview ? 1.0 : 3.0;
+             
+             // Create Noise Source
+             const src = audioCtx.createBufferSource();
+             src.buffer = getNoiseBuffer();
+             
+             // Filter (Lowpass for wind/ocean effect)
+             const filter = audioCtx.createBiquadFilter();
+             filter.type = 'lowpass';
+             filter.frequency.setValueAtTime(300, t);
+             // Sweep filter up then down to simulate breath/wave
+             filter.frequency.linearRampToValueAtTime(800, t + (dur/2));
+             filter.frequency.linearRampToValueAtTime(200, t + dur);
+             
+             // Gain Envelope
+             const gain = audioCtx.createGain();
+             gain.gain.setValueAtTime(0, t);
+             // Soft attack, hold, then fade
+             gain.gain.linearRampToValueAtTime(0.08, t + (dur * 0.2));
+             gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+             
+             src.connect(filter);
+             filter.connect(gain);
+             gain.connect(audioCtx.destination);
+             
+             src.start(t);
+             src.stop(t + dur + 0.1);
+        }
+
         function playChime() {
             if (!state.active) return;
-
-            // Vibration: Android Chrome requires user interaction. 
-            // We primed it on Start, but it doesn't hurt to call it here.
-            // Note: iOS Safari ignores this completely.
-            if (state.vibrationEnabled && navigator.vibrate) {
-                navigator.vibrate(200);
-            }
-
-            // Sound
             if (state.soundEnabled && audioCtx) {
+                // Special handling for Nature sound (Index 3)
+                if (state.soundType === 3) {
+                    playNatureSound(false);
+                    return;
+                }
+
                 const t = audioCtx.currentTime;
-                const fundamental = 440; // A4
+                const profile = SOUND_PROFILES[state.soundType] || SOUND_PROFILES[0];
+                const fundamental = profile.base;
                 
-                [1, 2.1, 3.5].forEach((ratio, i) => {
+                profile.ratios.forEach((ratio, i) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     
                     osc.type = 'sine';
                     osc.frequency.value = fundamental * ratio;
                     
-                    // Volume Reduced by 50% (was 0.1, now 0.05)
                     const baseVolume = 0.05; 
-
+                    
                     gain.gain.setValueAtTime(0, t);
                     gain.gain.linearRampToValueAtTime(baseVolume / (i+1), t + 0.05);
-                    gain.gain.exponentialRampToValueAtTime(0.001, t + 2.5);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 3.0);
                     
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
                     
                     osc.start(t);
-                    osc.stop(t + 3);
+                    osc.stop(t + 3.5);
                 });
             }
         }
@@ -354,7 +484,7 @@
             loadStorage();
             populateSelect();
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js');
+                // navigator.serviceWorker.register('./sw.js');
             }
         });
 
@@ -382,6 +512,17 @@
             showScreen('screen-home');
         }
 
+        function goToSupport() {
+            // Stop session if running, then go to support
+            if(state.active) stopSession();
+            showScreen('screen-support');
+        }
+
+        function returnToApp() {
+            // Go back to config usually
+            goToConfig();
+        }
+
         // --- Data Logic ---
         function loadStorage() {
             const stored = localStorage.getItem('breathwork_routines');
@@ -392,16 +533,20 @@
             }
             
             const soundPref = localStorage.getItem('breathwork_sound');
-            const vibPref = localStorage.getItem('breathwork_vibration');
+            const soundTypePref = localStorage.getItem('breathwork_sound_type');
             
-            document.getElementById('sound-toggle').checked = soundPref === 'true';
-            document.getElementById('vibration-toggle').checked = vibPref === 'true';
+            state.soundEnabled = soundPref === 'true';
+            state.soundType = soundTypePref ? parseInt(soundTypePref) : 0;
+            
+            document.getElementById('sound-toggle').checked = state.soundEnabled;
+            
+            updateSoundUI();
         }
 
         function saveStorage() {
             localStorage.setItem('breathwork_routines', JSON.stringify(state.routines));
             localStorage.setItem('breathwork_sound', document.getElementById('sound-toggle').checked);
-            localStorage.setItem('breathwork_vibration', document.getElementById('vibration-toggle').checked);
+            localStorage.setItem('breathwork_sound_type', state.soundType);
         }
 
         function populateSelect() {
@@ -428,6 +573,7 @@
             document.getElementById('inp-exhale').value = r.exhale;
             document.getElementById('inp-hold-empty').value = r.holdEmpty;
             document.getElementById('inp-duration').value = r.duration;
+            document.getElementById('custom-name-input').value = ""; // Clear new name input
             state.isDirty = false;
             updateStartButton();
         }
@@ -439,24 +585,99 @@
 
         function updateStartButton() {
             const btn = document.getElementById('btn-start-save');
-            btn.innerText = state.isDirty ? "SAVE & START" : "START";
+            const newName = document.getElementById('custom-name-input').value.trim();
+            
+            if (newName.length > 0) {
+                btn.innerText = "SAVE NEW & START";
+            } else if (state.isDirty) {
+                btn.innerText = "UPDATE & START";
+            } else {
+                btn.innerText = "START";
+            }
+        }
+
+        // --- Sound UI Logic ---
+        function toggleSoundOptions() {
+            state.soundEnabled = document.getElementById('sound-toggle').checked;
+            updateSoundUI();
+            saveStorage();
+            if (state.soundEnabled) initAudio();
+        }
+
+        function updateSoundUI() {
+            const panel = document.getElementById('sound-options-panel');
+            if (state.soundEnabled) {
+                panel.classList.remove('hidden');
+                // Highlight selected
+                for(let i=0; i<4; i++) {
+                    const el = document.getElementById(`sound-opt-${i}`);
+                    if(i === state.soundType) el.classList.add('selected');
+                    else el.classList.remove('selected');
+                }
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function selectSound(typeIndex) {
+            state.soundType = typeIndex;
+            updateSoundUI();
+            saveStorage();
+            
+            if(audioCtx) {
+                // Special handling for Nature Preview
+                if (typeIndex === 3) {
+                    playNatureSound(true);
+                    return;
+                }
+
+                // Short preview for tonal sounds
+                const t = audioCtx.currentTime;
+                const profile = SOUND_PROFILES[typeIndex];
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.frequency.value = profile.base;
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.05, t + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+                osc.start(t);
+                osc.stop(t + 0.6);
+            }
         }
 
         function handleStart() {
-            if (state.isDirty) {
+            const customName = document.getElementById('custom-name-input').value.trim();
+            
+            const formValues = {
+                inhale: parseFloat(document.getElementById('inp-inhale').value),
+                holdFull: parseFloat(document.getElementById('inp-hold-full').value),
+                exhale: parseFloat(document.getElementById('inp-exhale').value),
+                holdEmpty: parseFloat(document.getElementById('inp-hold-empty').value),
+                duration: parseFloat(document.getElementById('inp-duration').value)
+            };
+
+            if (customName) {
+                // Create NEW routine
                 const newRoutine = {
-                    name: "Custom Routine " + (state.routines.length + 1),
-                    inhale: parseFloat(document.getElementById('inp-inhale').value),
-                    holdFull: parseFloat(document.getElementById('inp-hold-full').value),
-                    exhale: parseFloat(document.getElementById('inp-exhale').value),
-                    holdEmpty: parseFloat(document.getElementById('inp-hold-empty').value),
-                    duration: parseFloat(document.getElementById('inp-duration').value)
+                    name: customName,
+                    ...formValues
                 };
+                state.routines.push(newRoutine);
+                state.currentRoutineIndex = state.routines.length - 1;
                 
+                saveStorage();
+                populateSelect();
+                document.getElementById('routine-select').value = state.currentRoutineIndex;
+                
+            } else if (state.isDirty) {
+                // Update CURRENT routine
                 state.routines[state.currentRoutineIndex] = { 
                     ...state.routines[state.currentRoutineIndex], 
-                    ...newRoutine, 
-                    name: state.routines[state.currentRoutineIndex].name.includes("(Edited)") ? state.routines[state.currentRoutineIndex].name : state.routines[state.currentRoutineIndex].name + " (Edited)" 
+                    ...formValues, 
+                    // Add 'Edited' tag if not present
+                    name: state.routines[state.currentRoutineIndex].name.includes("(Edited)") || state.routines[state.currentRoutineIndex].name.includes("Custom") ? state.routines[state.currentRoutineIndex].name : state.routines[state.currentRoutineIndex].name + " (Edited)" 
                 };
                 
                 saveStorage();
@@ -464,18 +685,10 @@
                 document.getElementById('routine-select').value = state.currentRoutineIndex;
             }
 
+            // Ensure sound state is synced
             state.soundEnabled = document.getElementById('sound-toggle').checked;
-            state.vibrationEnabled = document.getElementById('vibration-toggle').checked;
-            saveStorage(); 
-            
             if (state.soundEnabled) initAudio();
             
-            // Fix for Vibration: Prime the vibration on user interaction
-            if (state.vibrationEnabled && navigator.vibrate) {
-                // Short pulse to tell browser we are allowed to vibrate
-                navigator.vibrate(50);
-            }
-
             startSession();
         }
 
@@ -519,39 +732,28 @@
 
         // --- Logic: Get Phase Data from Time ---
         function getPhaseInfoAtTime(timeMs) {
-            // Normalize time to a single cycle
-            // NOTE: timeMs can be negative for drawing the "future" or "past" off-screen
-            // We need modulo that handles negatives correctly
             let t = timeMs % state.cycleDuration;
             if (t < 0) t += state.cycleDuration;
 
             const { inhale, holdFull, exhale, holdEmpty } = state.phaseConfig;
             
-            // Determine Phase & Y-Value (Progress 0.0 to 1.0)
-            // 0.0 = Empty/Bottom, 1.0 = Full/Top
-            
             if (t < inhale) {
-                // Inhale: Curve from 0 to 1
                 const p = t / inhale;
-                // Cosine easing: (1 - cos(p * pi)) / 2
                 const val = (1 - Math.cos(p * Math.PI)) / 2;
                 return { phase: 'INHALE', val: val, type: 'up' };
             }
             t -= inhale;
             
             if (t < holdFull) {
-                // Hold Full: Steady at 1
                 return { phase: 'HOLD', val: 1.0, type: 'top' };
             }
             t -= holdFull;
             
             if (t < exhale) {
-                // Exhale: Curve from 1 to 0
                 const p = t / exhale;
                 const val = 1 - ((1 - Math.cos(p * Math.PI)) / 2);
                 return { phase: 'EXHALE', val: val, type: 'down' };
             }
-            // Hold Empty: Steady at 0
             return { phase: 'HOLD', val: 0.0, type: 'bottom' };
         }
 
@@ -623,23 +825,20 @@
             const padding = 40;
             const drawH = height - (padding * 2);
             const baseY = height - padding;
-            const topY = padding;
-
-            // Configuration for the View Window
-            const WINDOW_MS = 12000; 
             
+            // View Config
+            const WINDOW_MS = 12000; 
             const NOW_X_RATIO = 0.5;
             const nowX = width * NOW_X_RATIO;
 
-            // Draw the line
+            // Draw line
             ctx.beginPath();
             ctx.lineWidth = 4;
-            ctx.strokeStyle = '#cbd5e1'; // Slate 300
+            ctx.strokeStyle = '#cbd5e1'; 
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
             const step = 2; 
-            
             let firstPoint = true;
 
             for (let x = 0; x <= width; x += step) {
@@ -647,7 +846,6 @@
                 const timeAtPixel = currentElapsed + (x - nowX) * msPerPixel;
 
                 const info = getPhaseInfoAtTime(timeAtPixel);
-                
                 const y = baseY - (info.val * drawH);
 
                 if (firstPoint) {
@@ -663,18 +861,66 @@
             const nowInfo = getPhaseInfoAtTime(currentElapsed);
             const dotY = baseY - (nowInfo.val * drawH);
 
-            // Dot Shadow/Glow
+            // Glow
             ctx.beginPath();
             ctx.arc(nowX, dotY, 20, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(30, 58, 138, 0.2)'; 
             ctx.fill();
 
-            // Dot Core
+            // Core
             ctx.beginPath();
             ctx.arc(nowX, dotY, 12, 0, Math.PI * 2);
             ctx.fillStyle = '#1e3a8a';
             ctx.fill();
         }
+
+        // --- Clipboard Logic ---
+        function copyAddress() {
+            const text = document.getElementById('zcash-address').innerText;
+            const btnText = document.getElementById('copy-text');
+            
+            // Fallback for iframe environments if navigator.clipboard is blocked
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopied(btnText);
+                }).catch(err => {
+                    fallbackCopy(text, btnText);
+                });
+            } else {
+                fallbackCopy(text, btnText);
+            }
+        }
+
+        function fallbackCopy(text, btnText) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Ensure it's not visible but part of DOM
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showCopied(btnText);
+            } catch (err) {
+                console.error('Fallback copy failed', err);
+                btnText.innerText = "Error Copying";
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopied(el) {
+            const original = el.innerText;
+            el.innerText = "Copied!";
+            setTimeout(() => {
+                el.innerText = original;
+            }, 2000);
+        }
+
     </script>
 </body>
 </html>
